@@ -246,7 +246,18 @@
     }
     @media (max-width:520px){
       .toothless-wrap{ transform: scale(.86); }
-      button{ min-width:120px; }
+      button{ min-width:120px; padding:10px 16px; font-size:16px; }
+      .actions{ min-height:58px; }
+      .card h1{ font-size:20px; }
+      .card{ padding:18px 14px 14px; }
+    }
+    @media (max-width:400px){
+      .toothless-wrap{ transform: scale(.72); }
+      button{ min-width:100px; padding:9px 14px; font-size:15px; }
+      .actions{ min-height:54px; gap:10px; }
+      .card h1{ font-size:18px; }
+      .card{ padding:16px 12px 12px; }
+      .dragon-stage.show{ transform: translateX(-50%) translateY(-2vh); }
     }
     .toothless{ transform:rotate(-5deg) scale(.86); }
     .toothless .head-wrap{ width:400px; height:290px; position:relative; }
@@ -542,40 +553,25 @@
 
     function ensureNoIsFixed(){
       if (noHasEscaped) return;
-
+      
+      // Najprv fixneme aj "Yes" na jeho aktuálnu pozíciu
       const yesRect = yes.getBoundingClientRect();
-      const noRect  = no.getBoundingClientRect();
-
       yes.style.position = 'fixed';
       yes.style.left = yesRect.left + 'px';
-      yes.style.top  = yesRect.top  + 'px';
+      yes.style.top = yesRect.top + 'px';
       yes.style.margin = '0';
-
+      
+      // Potom fixneme "No" na jeho aktuálnu pozíciu
+      const r = no.getBoundingClientRect();
       no.style.position = 'fixed';
-      no.style.left = noRect.left + 'px';
-      no.style.top  = noRect.top  + 'px';
+      no.style.left = r.left + 'px';
+      no.style.top  = r.top  + 'px';
       no.style.transform = 'translate(0,0)';
       no.style.zIndex = 11;
       no.style.margin = '0';
 
-
-      const pad = 10;
-      const yR = yes.getBoundingClientRect();
-      const nR = no.getBoundingClientRect();
-
-      const yesX = clamp(parseFloat(yes.style.left), pad, window.innerWidth - yR.width - pad);
-      const yesY = clamp(parseFloat(yes.style.top),  pad, window.innerHeight - yR.height - pad);
-      yes.style.left = yesX + 'px';
-      yes.style.top  = yesY + 'px';
-
-      const noX = clamp(parseFloat(no.style.left), pad, window.innerWidth - nR.width - pad);
-      const noY = clamp(parseFloat(no.style.top),  pad, window.innerHeight - nR.height - pad);
-      no.style.left = noX + 'px';
-      no.style.top  = noY + 'px';
-
       noHasEscaped = true;
     }
-
 
     function placeNoAt(x, y){
       ensureNoIsFixed();
@@ -591,7 +587,7 @@
     function moveNoAwayFrom(px, py){
       if(!enabledNoEscape) return;
 
-
+      // pred prvým útekom zoberieme jeho aktuálnu pozíciu v okienku a spravíme fixed
       ensureNoIsFixed();
 
       const r = no.getBoundingClientRect();
@@ -618,14 +614,24 @@
       pointer.y = e.clientY;
     }, {passive:true});
 
+    // Pre mobile touch support
+    window.addEventListener('touchmove', (e)=>{
+      if(e.touches.length > 0){
+        pointer.x = e.touches[0].clientX;
+        pointer.y = e.touches[0].clientY;
+      }
+    }, {passive:true});
 
+    // utečie až keď sa priblížiš (prípadne môžeš zmeniť 105)
     setInterval(()=>{
       if(!enabledNoEscape) return;
       const r = no.getBoundingClientRect();
       const cx = r.left + r.width/2;
       const cy = r.top + r.height/2;
       const dist = Math.hypot(pointer.x - cx, pointer.y - cy);
-      if(dist < 105){
+      // Na mobile menší threshold kvôli prstom
+      const threshold = window.innerWidth < 520 ? 85 : 105;
+      if(dist < threshold){
         moveNoAwayFrom(pointer.x, pointer.y);
       }
     }, 80);
