@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Valentínka 😈💘</title>
+  <style>
+    :root{
+      --bg1:#ffb3c7;
+      --bg2:#ff5d8f;
+      --bg3:#b5179e;
+
+      --panel:#ffffffdd;
+      --panel-border:#ff2e6f55;
+      --text:#2b2b2b;
+
+      /* Dragon (čierny) */
+      --dragon-dark:#0b0c10;
+      --dragon-mid:#151723;
+      --dragon-light:#2b2f3a;
+      --dragon-spot:#07070a;
+
+      /* Ružové očká */
+      --eye1:#ffe3ee;
+      --eye2:#ff76a8;
+
+      --iris:#0b0b0e;
+      --stroke:#000;
+
+      --heart:#ff2e6f;
+      --heart2:#ff8fb1;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      overflow:hidden;
+      font:500 18px/1.2 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 20% 10%, #fff 0%, transparent 50%),
+                  radial-gradient(900px 700px at 90% 20%, #fff 0%, transparent 55%),
+                  linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+    }
+
+    /* Fireworks canvas */
+    #fx{
+      position:fixed; inset:0;
+      width:100vw; height:100vh;
+      pointer-events:none;
+      z-index:5;
+      display:block;
+    }
+
+    /* Hearts layer */
+    #hearts{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:6;
+      overflow:hidden;
+    }
+    .heart{
+      position:absolute;
+      width:16px; height:16px;
+      transform: translate(-50%, -50%) rotate(45deg);
+      background:var(--heart);
+      opacity:0.95;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.15));
+      animation: floatUp linear forwards;
+      border-radius:3px;
+    }
+    .heart::before,.heart::after{
+      content:"";
+      position:absolute;
+      width:16px; height:16px;
+      background:inherit;
+      border-radius:50%;
+    }
+    .heart::before{ left:-8px; top:0; }
+    .heart::after{ left:0; top:-8px; }
+
+    @keyframes floatUp{
+      0%   { transform: translate(-50%,-50%) rotate(45deg) scale(.9); opacity:0; }
+      10%  { opacity:1; }
+      100% { transform: translate(-50%,-50%) rotate(45deg) translateY(-160px) scale(1.35); opacity:0; }
+    }
+
+    /* Modal (okienko) */
+    .modal{
+      position:fixed; inset:0;
+      display:grid;
+      place-items:center;
+      z-index:10;
+      padding:20px;
+    }
+    .card{
+      width:min(560px, 96vw);
+      min-width:min(560px, 96vw);
+      background:var(--panel);
+      border:1px solid var(--panel-border);
+      border-radius:18px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.22);
+      padding:22px 18px 18px;
+      backdrop-filter: blur(8px);
+      position:relative;
+      overflow:hidden;
+    }
+    .card::before{
+      content:"";
+      position:absolute; inset:-60px;
+      background: radial-gradient(circle at 20% 20%, #fff 0%, transparent 55%),
+                  radial-gradient(circle at 80% 30%, #fff 0%, transparent 60%),
+                  radial-gradient(circle at 50% 110%, #ffd1e0 0%, transparent 55%);
+      opacity:.7;
+      transform: rotate(8deg);
+      pointer-events:none;
+    }
+    .card h1{
+      margin:0 0 10px;
+      font-size:22px;
+      letter-spacing:.2px;
+      position:relative;
+      z-index:1;
+      text-align:center;
+    }
+    .card p{
+      margin:0 0 16px;
+      opacity:.92;
+      position:relative;
+      z-index:1;
+      text-align:center;
+    }
+
+    .actions{
+      position:relative;
+      z-index:1;
+      display:flex;
+      flex-direction:row;
+      flex-wrap:nowrap;
+      gap:14px;
+      justify-content:center;
+      align-items:center;
+      padding:10px 0 2px;
+      min-height:68px;
+      user-select:none;
+    }
+    button{
+      border:0;
+      border-radius:999px;
+      padding:12px 18px;
+      font-weight:900;
+      cursor:pointer;
+      min-width:140px;
+      transition: transform .12s ease, filter .12s ease;
+      box-shadow: 0 10px 20px rgba(0,0,0,.15);
+      touch-action: manipulation;
+    }
+    button:active{ transform: translateY(2px) scale(.98); }
+
+    #yes{
+      background: linear-gradient(135deg, #ff2e6f, #ff7aa8);
+      color:white;
+      z-index:1;
+    }
+
+    /* NIE je na začiatku normálne v layoute */
+    #no{
+      background: linear-gradient(135deg, #2b2b2b, #5a5a5a);
+      color:white;
+      position:relative;
+      left:auto; top:auto;
+      transform:none;
+      z-index:1;
+      margin:0;
+    }
+
+    .hint{
+      margin-top:10px;
+      font-size:13px;
+      opacity:.75;
+      text-align:center;
+      position:relative;
+      z-index:1;
+    }
+
+    /* After YES */
+    .hidden{ display:none !important; }
+    #centerText{
+      position:fixed;
+      inset:0;
+      display:grid;
+      place-items:center;
+      z-index:8;
+      pointer-events:none;
+      opacity:0;
+      transform: translateY(6px);
+      transition: opacity .35s ease, transform .35s ease;
+      text-align:center;
+      padding:18px;
+    }
+    #centerText.show{
+      opacity:1;
+      transform: translateY(0);
+    }
+    #centerText .big{
+      font-size: clamp(26px, 4vw, 46px);
+      font-weight:900;
+      letter-spacing:.5px;
+      color:#fff;
+      text-shadow: 0 12px 30px rgba(0,0,0,.25);
+      transform: translateY(-22vh);
+    }
+    #centerText .small{
+      margin-top:8px;
+      font-size: clamp(14px, 2vw, 18px);
+      color:#fff;
+      opacity:.95;
+      text-shadow: 0 10px 26px rgba(0,0,0,.22);
+      transform: translateY(-22vh);
+    }
+
+    /* Dragon wrapper: fixed bottom center, pops up on YES */
+    .dragon-stage{
+      position:fixed;
+      left:50%;
+      bottom:-10px;
+      transform: translateX(-50%) translateY(140%);
+      transition: transform 1.05s cubic-bezier(.2,.9,.2,1);
+      z-index:7;
+      pointer-events:none;
+      will-change:transform;
+    }
+    .dragon-stage.show{
+      transform: translateX(-50%) translateY(-4vh);
+    }
+
+    /* --- Toothless CSS (upravené farby + viac krku) --- */
+    .background{ position:relative; padding:0; background:transparent; }
+    .toothless-wrap{
+      width:430px;
+      height:330px;
+      margin:0;
+      transform: scale(1.06);
+      transform-origin: bottom center;
+      filter: drop-shadow(0 18px 26px rgba(0,0,0,.30));
+    }
+    @media (max-width:520px){
+      .toothless-wrap{ transform: scale(.86); }
+      button{ min-width:120px; }
+    }
+    .toothless{ transform:rotate(-5deg) scale(.86); }
+    .toothless .head-wrap{ width:400px; height:290px; position:relative; }
+
+    .toothless .head:before,
+    .toothless .head-wrap:after,
+    .toothless .head-wrap .ears:before,
+    .toothless .head-wrap .ears:after,
+    .toothless .head-wrap .ears .spot-dtl:before,
+    .toothless .head-wrap .ears .spot-dtl:after,
+    .toothless .head-wrap .ears .ears-main:before,
+    .toothless .head-wrap .ears .ears-main:after,
+    .toothless .head-wrap .ears .ears-dtl-1:before,
+    .toothless .head-wrap .ears .ears-dtl-1:after,
+    .toothless .head-wrap .ears .ears-dtl-2:before,
+    .toothless .head-wrap .ears .ears-dtl-2:after,
+    .toothless .head-wrap .head .spots:before,
+    .toothless .head-wrap .head .spots:after,
+    .toothless .head-wrap .head .spots .spot-dtl:before,
+    .toothless .head-wrap .head .spots .spot-dtl:after,
+    .toothless .head-wrap .eyes .eye .eye-dtl:before,
+    .toothless .head-wrap .eyes .eye .eye-dtl:after,
+    .toothless .head-wrap .nose:before,
+    .toothless .head-wrap .nose:after,
+    .toothless .head-wrap .nose .spots:before,
+    .toothless .head-wrap .nose .spots:after{
+      content:'';
+      position:absolute;
+    }
+
+    .toothless .head-wrap:after{
+      top:50px; z-index:1; width:inherit; height:inherit;
+      border-radius:50%;
+      background:var(--dragon-dark);
+      opacity:.25;
+    }
+
+    .toothless .head-wrap .spots,
+    .toothless .head-wrap .ears .spot-dtl{ position:absolute; }
+
+    .toothless .head-wrap .ears,
+    .toothless .head-wrap .ears .ears-main,
+    .toothless .head-wrap .ears .ears-dtl-1,
+    .toothless .head-wrap .ears .ears-dtl-2{
+      width:inherit; height:inherit; position:absolute;
+    }
+
+    .toothless .head-wrap .ears:before,
+    .toothless .head-wrap .ears:after,
+    .toothless .head-wrap .ears .ears-main:before,
+    .toothless .head-wrap .ears .ears-main:after,
+    .toothless .head-wrap .ears .ears-dtl-1:before,
+    .toothless .head-wrap .ears .ears-dtl-1:after,
+    .toothless .head-wrap .ears .ears-dtl-2:before,
+    .toothless .head-wrap .ears .ears-dtl-2:after{
+      background:linear-gradient(var(--dragon-light), var(--dragon-dark));
+    }
+
+    .toothless .head-wrap .ears:before,
+    .toothless .head-wrap .ears:after{ top:-35px; width:40px; height:90px; }
+    .toothless .head-wrap .ears:before{
+      left:140px; border-radius:100% 30px 0 0 / 90px; transform:rotate(-16deg);
+    }
+    .toothless .head-wrap .ears:after{
+      right:140px; border-radius:30px 100% 0 0 / 90px; transform:rotate(16deg);
+    }
+
+    .toothless .head-wrap .ears .spot-dtl{
+      z-index:1; border-radius:50%; background:var(--dragon-spot); opacity:.95;
+    }
+    .toothless .head-wrap .ears .spot-dtl:before,
+    .toothless .head-wrap .ears .spot-dtl:after{ background:inherit; border-radius:inherit; }
+
+    .toothless .head-wrap .ears .ears-main:before,
+    .toothless .head-wrap .ears .ears-main:after{
+      width:150px; height:280px; bottom:150px;
+    }
+    .toothless .head-wrap .ears .ears-main:before{
+      left:-22px; border-radius:100% 40px 0 0 / 175px; transform:rotate(-25deg);
+    }
+    .toothless .head-wrap .ears .ears-main:after{
+      right:-22px; border-radius:40px 100% 0 0 / 175px; transform:rotate(25deg);
+    }
+
+    .toothless .head-wrap .ears .ears-dtl-1:before,
+    .toothless .head-wrap .ears .ears-dtl-1:after{
+      width:85px; height:150px; bottom:115px;
+    }
+    .toothless .head-wrap .ears .ears-dtl-1:before{
+      left:-55px; border-radius:100% 40px 0 0 / 115px; transform:rotate(-55deg);
+    }
+    .toothless .head-wrap .ears .ears-dtl-1:after{
+      right:-55px; border-radius:40px 100% 0 0 / 115px; transform:rotate(55deg);
+    }
+
+    .toothless .head-wrap .ears .ears-dtl-2:before,
+    .toothless .head-wrap .ears .ears-dtl-2:after{
+      width:85px; height:150px; bottom:25px;
+    }
+    .toothless .head-wrap .ears .ears-dtl-2:before{
+      left:-55px; border-radius:100% 40px 0 0 / 115px; transform:rotate(-75deg);
+    }
+    .toothless .head-wrap .ears .ears-dtl-2:after{
+      right:-55px; border-radius:40px 100% 0 0 / 115px; transform:rotate(75deg);
+    }
+
+    .toothless .head-wrap .head{
+      z-index:2; width:inherit; height:inherit; position:relative;
+      border-radius:290px 290px 50% 50%;
+      background:radial-gradient(var(--dragon-light), var(--dragon-dark));
+      background-size:400px 400px;
+      box-shadow:0 -15px 20px rgba(0,0,0,.35);
+    }
+    .toothless .head-wrap .head:before{
+      left:50%; width:300px; bottom:20px; height:100px; margin-left:-150px;
+      border-radius:50%;
+      border-bottom:5px solid #000;
+      opacity:.75;
+    }
+
+    .toothless .head-wrap .eyes{ top:0; width:inherit; height:inherit; position:absolute; }
+    .toothless .head-wrap .eyes .eye{
+      top:100px; z-index:2; width:120px; height:110px; overflow:hidden; position:absolute;
+      background:radial-gradient(var(--eye1), var(--eye2));
+    }
+    .toothless .head-wrap .eyes .eye:before{
+      z-index:1; content:''; width:inherit; height:inherit; position:absolute;
+      background:radial-gradient(var(--dragon-light), var(--dragon-dark));
+      animation:eye-blink 2s linear infinite;
+      opacity:.98;
+    }
+    @keyframes eye-blink{
+      0%,80%,100%{transform:translateY(-100%)}
+      81%,95%{transform:translateY(0)}
+    }
+    .toothless .head-wrap .eyes .eye.left{
+      left:50px;
+      border-radius:75px 130px 75px 120px;
+      box-shadow:8px 5px 0 #000 inset, 5px 12px 0 rgba(255,255,255,.06) inset;
+    }
+    .toothless .head-wrap .eyes .eye.right{
+      right:50px;
+      border-radius:130px 75px 120px 75px;
+      box-shadow:-8px 5px 0 #000 inset, -12px 12px 0 rgba(255,255,255,.06) inset;
+    }
+
+    .toothless .head-wrap .eyes .eye .eye-dtl{
+      width:60px; height:85px; border-radius:50%;
+      background:var(--iris); position:absolute;
+      box-shadow:0 0 0 6px rgba(255,255,255,.08) inset;
+    }
+    .toothless .head-wrap .eyes .eye.right .eye-dtl{ left:10px; }
+    .toothless .head-wrap .eyes .eye.left .eye-dtl{ right:5px; }
+    .toothless .head-wrap .eyes .eye .eye-dtl:before{
+      top:15px; left:-15px; width:50px; height:50px; border-radius:inherit;
+      background:rgba(255,255,255,.22);
+    }
+    .toothless .head-wrap .eyes .eye .eye-dtl:after{
+      top:20px; left:10px; width:20px; height:20px; border-radius:inherit;
+      background:#fff;
+    }
+
+    .toothless .head-wrap .nose{
+      left:50%; z-index:2; width:55px; bottom:40px; height:25px; position:absolute; margin-left:-25px;
+    }
+    .toothless .head-wrap .nose:before,
+    .toothless .head-wrap .nose:after{
+      width:15px; height:5px; background:#000; border-radius:5px 5px 0 0;
+    }
+    .toothless .head-wrap .nose:before{ left:0; transform:rotate(30deg); }
+    .toothless .head-wrap .nose:after{ right:0; transform:rotate(-30deg); }
+    .toothless .head-wrap .nose .spots{
+      top:-45px; left:15px; width:15px; height:10px; background:#2b2f3a; position:absolute;
+      border-radius:50%; opacity:.9;
+    }
+
+    .toothless .neck{
+      width:400px;
+      height:240px;
+      bottom:90px;
+      position:relative;
+      transform:skewY(5deg);
+      border-radius:22px 22px 0 0;
+      background:linear-gradient(to right, var(--dragon-dark), var(--dragon-light), var(--dragon-light), var(--dragon-dark));
+      -webkit-box-reflect:below -10px -webkit-linear-gradient(bottom, rgba(255,255,255,1) 10%, transparent 40%, transparent 100%);
+    }
+
+    .toothless-wrap .text{
+      left:50%;
+      bottom:92px;
+      transform: translateX(-50%);
+      color:#fff;
+      font-size:44px;
+      position:relative;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      text-transform:uppercase;
+      -webkit-text-stroke:2px #000;
+      text-shadow:0 10px 22px rgba(0,0,0,.25);
+      letter-spacing:2px;
+      opacity:.95;
+    }
+
+    .dragon-stage.show .toothless-wrap{ animation: bob 2.6s ease-in-out infinite; }
+    @keyframes bob{
+      0%,100%{ transform: scale(1.06) translateY(0); }
+      50%{ transform: scale(1.06) translateY(-8px); }
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="fx"></canvas>
+  <div id="hearts"></div>
+
+  <!-- Modal -->
+  <div class="modal" id="modal">
+    <div class="card" role="dialog" aria-modal="true" aria-label="Valentínka">
+      <h1>Will you be my valentine??</h1>
+
+      <div class="actions">
+        <button id="yes" type="button">Yes</button>
+        <button id="no" type="button">No</button>
+      </div>
+
+
+    </div>
+  </div>
+
+  <!-- Center text after yes -->
+  <div id="centerText">
+    <div>
+      <div class="big">Jupííí! 💘🎉</div>
+    </div>
+  </div>
+
+  <!-- Dragon -->
+  <div class="dragon-stage" id="dragon">
+    <div class="background">
+      <div class="toothless-wrap">
+        <div class="toothless">
+          <div class="head-wrap">
+            <div class="ears">
+              <div class="ears-dtl-2"></div>
+              <div class="ears-dtl-1">
+                <div class="spot-dtl left"></div>
+                <div class="spot-dtl right"></div>
+              </div>
+              <div class="ears-main">
+                <div class="spot-dtl left">
+                  <div class="spot-dtl top"></div>
+                  <div class="spot-dtl bottom"></div>
+                </div>
+                <div class="spot-dtl right">
+                  <div class="spot-dtl top"></div>
+                  <div class="spot-dtl bottom"></div>
+                </div>
+              </div>
+            </div>
+            <div class="head">
+              <div class="spots">
+                <div class="spot-dtl"></div>
+                <div class="spot-dtl scale"></div>
+              </div>
+            </div>
+            <div class="eyes">
+              <div class="eye left"><div class="eye-dtl"></div></div>
+              <div class="eye right"><div class="eye-dtl"></div></div>
+            </div>
+            <div class="nose">
+              <div class="spots"></div>
+            </div>
+          </div>
+          <div class="neck"></div>
+        </div>
+        <div class="text">LOVE</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------------------------
+    // "NIE" je najprv slušne v okienku, a až pri priblížení zdrhne po celej stránke
+    // ---------------------------
+    const no = document.getElementById('no');
+    const modal = document.getElementById('modal');
+    const yes = document.getElementById('yes');
+
+    let enabledNoEscape = true;
+    let pointer = {x:-9999,y:-9999};
+    let noHasEscaped = false;
+
+    function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+    function ensureNoIsFixed(){
+      if (noHasEscaped) return;
+      
+      // Najprv fixneme aj "Yes" na jeho aktuálnu pozíciu
+      const yesRect = yes.getBoundingClientRect();
+      yes.style.position = 'fixed';
+      yes.style.left = yesRect.left + 'px';
+      yes.style.top = yesRect.top + 'px';
+      yes.style.margin = '0';
+      
+      // Potom fixneme "No" na jeho aktuálnu pozíciu
+      const r = no.getBoundingClientRect();
+      no.style.position = 'fixed';
+      no.style.left = r.left + 'px';
+      no.style.top  = r.top  + 'px';
+      no.style.transform = 'translate(0,0)';
+      no.style.zIndex = 11;
+      no.style.margin = '0';
+
+      noHasEscaped = true;
+    }
+
+    function placeNoAt(x, y){
+      ensureNoIsFixed();
+
+      const r = no.getBoundingClientRect();
+      const pad = 10;
+      const nx = clamp(x, pad, window.innerWidth - r.width - pad);
+      const ny = clamp(y, pad, window.innerHeight - r.height - pad);
+      no.style.left = nx + "px";
+      no.style.top  = ny + "px";
+    }
+
+    function moveNoAwayFrom(px, py){
+      if(!enabledNoEscape) return;
+
+      // pred prvým útekom zoberieme jeho aktuálnu pozíciu v okienku a spravíme fixed
+      ensureNoIsFixed();
+
+      const r = no.getBoundingClientRect();
+      const bx = r.left + r.width/2;
+      const by = r.top + r.height/2;
+
+      let dx = bx - px;
+      let dy = by - py;
+      const len = Math.hypot(dx, dy) || 1;
+      dx /= len; dy /= len;
+
+      const jump = 220 + Math.random()*260;
+      const rx = (Math.random()*140 - 70);
+      const ry = (Math.random()*140 - 70);
+
+      const targetX = bx + dx*jump + rx - r.width/2;
+      const targetY = by + dy*jump + ry - r.height/2;
+
+      placeNoAt(targetX, targetY);
+    }
+
+    window.addEventListener('pointermove', (e)=>{
+      pointer.x = e.clientX;
+      pointer.y = e.clientY;
+    }, {passive:true});
+
+    // utečie až keď sa priblížiš (prípadne môžeš zmeniť 105)
+    setInterval(()=>{
+      if(!enabledNoEscape) return;
+      const r = no.getBoundingClientRect();
+      const cx = r.left + r.width/2;
+      const cy = r.top + r.height/2;
+      const dist = Math.hypot(pointer.x - cx, pointer.y - cy);
+      if(dist < 105){
+        moveNoAwayFrom(pointer.x, pointer.y);
+      }
+    }, 80);
+
+    no.addEventListener('mouseenter', (e)=> moveNoAwayFrom(e.clientX, e.clientY));
+    no.addEventListener('pointerdown', (e)=>{
+      moveNoAwayFrom(e.clientX, e.clientY);
+      e.preventDefault();
+    });
+    no.addEventListener('click', (e)=>{
+      e.preventDefault();
+      moveNoAwayFrom(pointer.x, pointer.y);
+    });
+
+    // ---------------------------
+    // Hearts spawning
+    // ---------------------------
+    const heartsLayer = document.getElementById('hearts');
+    let heartTimer = null;
+
+    function spawnHeart(x, y){
+      const h = document.createElement('div');
+      h.className = 'heart';
+
+      const size = 10 + Math.random()*18;
+      h.style.width = size + 'px';
+      h.style.height = size + 'px';
+      h.style.background = (Math.random() < 0.5) ? 'var(--heart)' : 'var(--heart2)';
+
+      const dur = 900 + Math.random()*900;
+      h.style.animationDuration = dur + 'ms';
+
+      const driftX = (Math.random()*160 - 80);
+      h.style.left = (x + driftX) + 'px';
+      h.style.top = (y + (Math.random()*40 - 20)) + 'px';
+
+      heartsLayer.appendChild(h);
+      setTimeout(()=> h.remove(), dur + 80);
+    }
+
+    function startHeartsAroundDragon(){
+      const dragon = document.getElementById('dragon');
+      heartTimer = setInterval(()=>{
+        const r = dragon.getBoundingClientRect();
+        const x = r.left + r.width*(0.25 + Math.random()*0.5);
+        const y = r.top + r.height*(0.10 + Math.random()*0.40);
+        spawnHeart(x, y);
+      }, 90);
+    }
+
+    // ---------------------------
+    // Fireworks (canvas)
+    // ---------------------------
+    const canvas = document.getElementById('fx');
+    const ctx = canvas.getContext('2d', { alpha:true });
+    let W=0, H=0, dpr=1;
+
+    function resize(){
+      dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      W = Math.floor(window.innerWidth);
+      H = Math.floor(window.innerHeight);
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      canvas.style.width = W + 'px';
+      canvas.style.height = H + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const fireworks = [];
+    const sparks = [];
+
+    function rand(min,max){ return min + Math.random()*(max-min); }
+
+    function newFirework(){
+      fireworks.push({
+        x: rand(W*0.15, W*0.85),
+        y: H + 10,
+        vx: rand(-1.0, 1.0),
+        vy: rand(-10.5, -13.5),
+        life: rand(45, 70),
+        t: 0
+      });
+    }
+
+    function burst(x,y){
+      const n = Math.floor(rand(40, 80));
+      const palette = ['#ff2e6f','#ff7aa8','#ffd1e0','#ffffff','#b5179e','#ff5d8f'];
+      const col = palette[Math.floor(Math.random()*palette.length)];
+      for(let i=0;i<n;i++){
+        const a = Math.random()*Math.PI*2;
+        const sp = rand(2.0, 6.5);
+        sparks.push({
+          x,y,
+          vx: Math.cos(a)*sp,
+          vy: Math.sin(a)*sp,
+          g: 0.08 + Math.random()*0.05,
+          life: rand(35, 80),
+          t: 0,
+          col
+        });
+      }
+    }
+
+    let fxOn = false;
+    function hexToRgb(hex){
+      const h = hex.replace('#','');
+      const r = parseInt(h.slice(0,2),16);
+      const g = parseInt(h.slice(2,4),16);
+      const b = parseInt(h.slice(4,6),16);
+      return `${r},${g},${b}`;
+    }
+
+    function loop(){
+      requestAnimationFrame(loop);
+      if(!fxOn) return;
+
+      ctx.clearRect(0,0,W,H);
+
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0,0,W,H);
+
+      if(Math.random() < 0.09) newFirework();
+
+      for(let i=fireworks.length-1;i>=0;i--){
+        const f = fireworks[i];
+        f.t++;
+        f.x += f.vx;
+        f.y += f.vy;
+        f.vy += 0.18;
+
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, 2.2, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fill();
+
+        if(f.t > f.life || f.vy > 0){
+          burst(f.x, f.y);
+          fireworks.splice(i,1);
+        }
+      }
+
+      for(let i=sparks.length-1;i>=0;i--){
+        const s = sparks[i];
+        s.t++;
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += s.g;
+        s.vx *= 0.985;
+        s.vy *= 0.985;
+
+        const alpha = Math.max(0, 1 - s.t / s.life);
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, 2.0, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(${hexToRgb(s.col)},${alpha})`;
+        ctx.fill();
+
+        if(s.t >= s.life) sparks.splice(i,1);
+      }
+    }
+    loop();
+
+    // ---------------------------
+    // YES click: reveal
+    // ---------------------------
+    const centerText = document.getElementById('centerText');
+    const dragon = document.getElementById('dragon');
+
+    yes.addEventListener('click', ()=>{
+      enabledNoEscape = false;
+
+      modal.classList.add('hidden');
+      no.classList.add('hidden');
+
+      centerText.classList.add('show');
+      dragon.classList.add('show');
+
+      startHeartsAroundDragon();
+      fxOn = true;
+
+      for(let k=0;k<6;k++){
+        setTimeout(()=> burst(rand(W*0.2, W*0.8), rand(H*0.1, H*0.55)), 120*k);
+      }
+    });
+  </script>
+</body>
+</html>
