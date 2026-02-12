@@ -542,25 +542,40 @@
 
     function ensureNoIsFixed(){
       if (noHasEscaped) return;
-      
-      // Najprv fixneme aj "Yes" na jeho aktuálnu pozíciu
+
       const yesRect = yes.getBoundingClientRect();
+      const noRect  = no.getBoundingClientRect();
+
       yes.style.position = 'fixed';
       yes.style.left = yesRect.left + 'px';
-      yes.style.top = yesRect.top + 'px';
+      yes.style.top  = yesRect.top  + 'px';
       yes.style.margin = '0';
-      
-      // Potom fixneme "No" na jeho aktuálnu pozíciu
-      const r = no.getBoundingClientRect();
+
       no.style.position = 'fixed';
-      no.style.left = r.left + 'px';
-      no.style.top  = r.top  + 'px';
+      no.style.left = noRect.left + 'px';
+      no.style.top  = noRect.top  + 'px';
       no.style.transform = 'translate(0,0)';
       no.style.zIndex = 11;
       no.style.margin = '0';
 
+
+      const pad = 10;
+      const yR = yes.getBoundingClientRect();
+      const nR = no.getBoundingClientRect();
+
+      const yesX = clamp(parseFloat(yes.style.left), pad, window.innerWidth - yR.width - pad);
+      const yesY = clamp(parseFloat(yes.style.top),  pad, window.innerHeight - yR.height - pad);
+      yes.style.left = yesX + 'px';
+      yes.style.top  = yesY + 'px';
+
+      const noX = clamp(parseFloat(no.style.left), pad, window.innerWidth - nR.width - pad);
+      const noY = clamp(parseFloat(no.style.top),  pad, window.innerHeight - nR.height - pad);
+      no.style.left = noX + 'px';
+      no.style.top  = noY + 'px';
+
       noHasEscaped = true;
     }
+
 
     function placeNoAt(x, y){
       ensureNoIsFixed();
@@ -576,7 +591,7 @@
     function moveNoAwayFrom(px, py){
       if(!enabledNoEscape) return;
 
-      // pred prvým útekom zoberieme jeho aktuálnu pozíciu v okienku a spravíme fixed
+
       ensureNoIsFixed();
 
       const r = no.getBoundingClientRect();
@@ -603,7 +618,7 @@
       pointer.y = e.clientY;
     }, {passive:true});
 
-    // utečie až keď sa priblížiš (prípadne môžeš zmeniť 105)
+
     setInterval(()=>{
       if(!enabledNoEscape) return;
       const r = no.getBoundingClientRect();
